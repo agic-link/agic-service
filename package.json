@@ -1,0 +1,19 @@
+{
+  "name": "agic-service",
+  "version": "1.0.0",
+  "description": "agic service",
+  "main": "src/index.js",
+  "scripts": {
+    "run": "npm start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agic-link/agic-service.git"
+  },
+  "author": "EndOfMaster",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/agic-link/agic-service/issues"
+  },
+  "homepage": "https://github.com/agic-link/agic-service#readme"
+}
