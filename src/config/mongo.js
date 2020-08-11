@@ -1,10 +1,9 @@
 const config = require('./config');
 const mongoose = require('mongoose');
 
+const routes = require('../controller/routes')
 
-const routes=require('../controller/routes')
-
-function connectMongoDB(app) {
+function connectMongoDB() {
     try {
         mongoose.connect(config.db, {
             useNewUrlParser: true,
@@ -18,7 +17,7 @@ function connectMongoDB(app) {
         })
         db.once('open', () => {
             console.log('MongoDB connecting succeeded')
-            app.listen(8080, function () {
+            routes.app.listen(8080, function () {
                 const host = '127.0.0.1'
                 const port = this.address().port;
 
@@ -34,5 +33,5 @@ function connectMongoDB(app) {
 const db = connectMongoDB();
 
 module.exports = {
-    db: db,
+    db: db
 }

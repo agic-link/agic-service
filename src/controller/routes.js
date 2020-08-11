@@ -11,3 +11,7 @@ module.exports = function () {
         console.log(req)
     });
 }
+
+module.exports = {
+    app: app
+}

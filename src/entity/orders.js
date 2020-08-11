@@ -1,6 +1,5 @@
 const db = require('../config/mongo').db
 
-//todo 这里会报错
 const Orders = db.model('Orders', {
     transactionHash: String,
     status: String,
