@@ -1,7 +1,6 @@
 const db = require('../config/mongo').db
 
-console.log(db);
-
+//todo 这里会报错
 const Orders = db.model('Orders', {
     transactionHash: String,
     status: String,
@@ -32,7 +31,8 @@ module.exports = {
     find: function (user, page, size) {
         const options = {
             limit: size | 10,
-            skip: page == null ? 0 : page * size
+            skip: page == null ? 0 : page * size,
+            sort: {created: -1}
         };
         //Conditions,fields,options,callback
         Orders.find({user: user}, {}, options, (error, docs) => {

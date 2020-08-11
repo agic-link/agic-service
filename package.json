@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/agic-link/agic-service#readme",
   "dependencies": {
+    "express": "^4.17.1",
     "mongodb": "^3.6.0",
     "mongoose": "^5.9.28",
     "process": "^0.11.10"
