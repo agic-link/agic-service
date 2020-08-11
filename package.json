@@ -4,7 +4,8 @@
   "description": "agic service",
   "main": "src/index.js",
   "scripts": {
-    "run": "npm start"
+    "dev": "NODE_ENV=dev node src/index.js",
+    "prod": "NODE_ENV=prod node src/index.js"
   },
   "repository": {
     "type": "git",
@@ -15,5 +16,10 @@
   "bugs": {
     "url": "https://github.com/agic-link/agic-service/issues"
   },
-  "homepage": "https://github.com/agic-link/agic-service#readme"
+  "homepage": "https://github.com/agic-link/agic-service#readme",
+  "dependencies": {
+    "mongodb": "^3.6.0",
+    "mongoose": "^5.9.28",
+    "process": "^0.11.10"
+  }
 }
