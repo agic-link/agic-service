@@ -3,14 +3,23 @@ const mongoose = require('mongoose');
 
 function connectMongoDB() {
     try {
-        mongoose.connect(config.db, {
-            useNewUrlParser: true,
-            bufferMaxEntries: 0,
-            reconnectTries: 30,
-            reconnectInterval: 1000,
-            autoReconnect: true,
-            poolSize: 5
-        })
+        if (process.env.NODE_ENV === 'prod') {
+            const options = {
+                useNewUrlParser: true,
+                bufferMaxEntries: 0,
+                reconnectTries: 30,
+                reconnectInterval: 1000,
+                autoReconnect: true,
+                poolSize: 5,
+                user: config.mongo.user,
+                pass: config.mongo.password,
+                authMechanism: 'SCRAM-SHA-1'
+            };
+            mongoose.connect(config.mongo.url, options);
+        } else {
+            mongoose.connect(config.mongo.url);
+        }
+
         const db = mongoose.connection;
         db.on('error', (error) => {
             console.log(`MongoDB connecting failed: ${error}`)

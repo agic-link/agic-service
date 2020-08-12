@@ -2,5 +2,9 @@ const development = require('./env/dev');
 const production = require('./env/prod');
 
 module.exports = {
-    db: process.env.NODE_ENV === 'prod' ? production.db : development.db
+    mongo: {
+        url: process.env.NODE_ENV === 'prod' ? production.mongo.url : development.mongo.url,
+        user: process.env.NODE_ENV === 'prod' ? production.mongo.user : development.mongo.user,
+        password: process.env.NODE_ENV === 'prod' ? production.mongo.password : development.mongo.password,
+    }
 }
