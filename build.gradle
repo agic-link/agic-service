@@ -1,0 +1,44 @@
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath 'com.bmuschko:gradle-docker-plugin:3.2.8'
+  }
+}
+
+apply plugin: 'java'
+apply plugin: 'com.bmuschko.docker-remote-api'
+
+group 'link.agic.service'
+
+repositories {
+  mavenLocal()
+  jcenter()
+}
+
+docker {
+  registryCredentials {
+    url = 'https://' + hubAddress;
+    username = project.hasProperty('myDockerUser') ? project.property('myDockerUser') : '<myDockerUser>'
+    password = project.hasProperty('myDockerPassword') ? project.property('myDockerPassword') : '<myDockerPassword>'
+  }
+}
+
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
+import java.text.SimpleDateFormat
+
+ext {
+  hubAddress = project.property('hubAddress')
+  dockerImageName = hubAddress+'/wzm/agic-service:' + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date())
+}
+
+task dockerBuild(type: DockerBuildImage) {
+  inputDir = projectDir
+  tag = dockerImageName
+}
+
+task dockerPush(type: DockerPushImage, dependsOn: dockerBuild) {
+  imageName = dockerBuild.tag
+}

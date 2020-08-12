@@ -10,7 +10,7 @@ const Orders = db.model('Orders', {
 });
 
 module.exports = {
-    insertOne: function (transactionHash, status, created, user, amount, operating) {
+    insertOne: function (transactionHash, status, created, user, amount, operating, callback) {
         const orders = new Orders({
             transactionHash: transactionHash,
             status: status,
@@ -19,27 +19,18 @@ module.exports = {
             amount: amount,
             operating: operating
         });
-        orders.save(function (err) {
-            if (err) {
-                console.log(err);
-            } else {
-                console.log('success');
-            }
-        });
+        orders.save(callback);
     },
     find: function (user, page, size) {
         const options = {
-            limit: size | 10,
-            skip: page == null ? 0 : page * size,
+            limit: size,
+            skip: page * size,
             sort: {created: -1}
         };
         //Conditions,fields,options,callback
-        Orders.find({user: user}, {}, options, (error, docs) => {
-            if (error) {
-                console.log("error :" + error);
-            } else {
-                console.log(docs); //docs: age为6的所有文档
-            }
-        });
+        return Orders.find({user: user}, {}, options).exec();
+    },
+    findCount: function (user, callback) {
+        Orders.countDocuments({user: user}, callback);
     }
 }
