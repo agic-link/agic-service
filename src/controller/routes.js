@@ -13,16 +13,17 @@ app.all('/*', (req, res, next) => {
     next();
 });
 
-app.get('/', function (req, res) {
+app.get('/', (req, res) => {
     res.send('This is Agic service');
 });
 
-app.get('/orders', function (req, res) {
+app.get('/transaction', (req, res) => {
     const user = req.body.user;
     const page = req.body.page | 0;
     const size = req.body.size | 10;
-    orders.findCount(user, (err, count) => {
-        orders.find(user, page, size).then((result) => {
+    const event = req.body.event;
+    orders.findCount(user, event, (err, count) => {
+        orders.find(user, event, page, size, (result) => {
             res.send({
                 list: result,
                 page: page,
@@ -34,14 +35,15 @@ app.get('/orders', function (req, res) {
     });
 });
 
-app.post('/orders', (req, res) => {
+app.post('/transaction', (req, res) => {
     const transactionHash = req.body.transactionHash;
     const status = req.body.status;
     const created = req.body.created;
-    const user = req.body.user;
+    const from = req.body.from;
+    const to = req.body.to;
     const amount = req.body.amount;
-    const operating = req.body.operating;
-    orders.insertOne(transactionHash, status, created, user, amount, operating, (err, order) => {
+    const event = req.body.event;
+    orders.insertTransaction(transactionHash, status, created, from, to, amount, event, (err, order) => {
         if (err) {
             console.log(err);
             res.status(500).send("Order record failed");
@@ -52,7 +54,25 @@ app.post('/orders', (req, res) => {
     });
 })
 
-const server = app.listen(8080, function () {
+app.post('/redeem', (req, res) => {
+    const transactionHash = req.body.transactionHash;
+    const created = req.body.created;
+    const from = req.body.from;
+    const amount = req.body.amount;
+    const serviceCharge = req.body.serviceCharge;
+    const subPledgeEth = req.body.subPledgeEth;
+    orders.insertRedeem(transactionHash, created, from, amount, serviceCharge, subPledgeEth, (err, order) => {
+        if (err) {
+            console.log(err);
+            res.status(500).send("Order record failed");
+            return;
+        }
+        console.log("Order record successful: " + order._id);
+        res.status(200).end();
+    });
+})
+
+const server = app.listen(8080, (ss) => {
     const host = '127.0.0.1';
     const port = server.address().port;
     console.log("Agic Service API已启动，访问地址为 http://%s:%s", host, port)
