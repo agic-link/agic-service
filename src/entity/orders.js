@@ -1,6 +1,7 @@
 const config = require('../config/config')
-const db = require('../config/mongo').db
-const StringUtils = require('../uitl/StringUtils')
+const db = require('../support/mongo').db
+const StringUtils = require('../util/StringUtils')
+const contract = require('../support/contract')
 
 const ordersStructure = {
     transactionHash: String,
@@ -8,7 +9,8 @@ const ordersStructure = {
     created: Date,
     from: String,
     to: String,
-    amount: Number,
+    value: Number,
+    agicValue: Number,
     serviceCharge: Number,
     subPledgeEth: Number,
     event: String
@@ -17,39 +19,62 @@ const ordersStructure = {
 const MainOrders = db.model('Orders', ordersStructure);
 const RopstenOrders = db.model('RopstenOrders', ordersStructure);
 
-const Orders = config.web3.chainNet ? MainOrders : RopstenOrders;
+function getOrders(id) {
+    switch (id) {
+        case '1':
+            return MainOrders;
+        case '3':
+            return RopstenOrders;
+        default:
+            throw new Error('Not yet support this network');
+    }
+}
 
 module.exports = {
     insertOne: function (orders, callback) {
         orders.save(callback);
     },
-    insertTransaction: function (transactionHash, status, created, from, to, amount, event, callback) {
-        const orders = new Orders({
-            transactionHash: transactionHash,
-            status: status,
-            created: created,
-            from: from,
-            to: to,
-            amount: amount,
-            event: event
-        });
-        this.insertOne(orders, callback);
+    insertTransaction: function (networkId, transactionHash, created, event, callback) {
+        contract.getTransaction(networkId, transactionHash, (error, result) => {
+            if (error) {
+                console.error('Inquiry transaction Error', error)
+                return;
+            }
+            const Orders = getOrders(networkId);
+            const orders = new Orders({
+                transactionHash: transactionHash,
+                status: config.constant.status.pending,
+                created: created,
+                from: result.from,
+                to: result.to,
+                value: result.value,
+                event: event
+            });
+            this.insertOne(orders, callback);
+        })
     },
-    insertRedeem: function (transactionHash, created, from, amount, serviceCharge, subPledgeEth, callback) {
-        const orders = new Orders({
-            transactionHash: transactionHash,
-            status: config.constant.status.pending,
-            created: created,
-            from: from,
-            to: config.web3.address,
-            amount: amount,
-            event: config.constant.events.redeem,
-            serviceCharge: serviceCharge,
-            subPledgeEth: subPledgeEth
-        });
-        this.insertOne(orders, callback);
+    insertRedeem: function (networkId, transactionHash, created, agicAmount, callback) {
+        contract.getTransaction(networkId, transactionHash, (error, result) => {
+            if (error) {
+                console.error('Inquiry redeem Error', error)
+                return;
+            }
+            const Orders = getOrders(networkId);
+            const orders = new Orders({
+                transactionHash: transactionHash,
+                status: config.constant.status.pending,
+                created: created,
+                from: result.from,
+                to: result.to,
+                value: result.value,
+                agicAmount: agicAmount,
+                event: config.constant.events.redeem,
+            });
+            this.insertOne(orders, callback);
+        })
     },
-    find: function (user, event, page, size, callback) {
+    find: function (networkId, user, event, page, size, callback) {
+        const Orders = getOrders(networkId);
         const skip = page * size;
         const sort = {created: -1};
         const query = Orders.find().where('from').eq(user);
@@ -59,7 +84,8 @@ module.exports = {
         query.limit(size).skip(skip).sort(sort);
         return query.exec(callback);
     },
-    findCount: function (user, event, callback) {
+    findCount: function (networkId, user, event, callback) {
+        const Orders = getOrders(networkId);
         let conditions;
         if (StringUtils.isNotBlank(event)) {
             conditions = {user: user, event: event};
@@ -68,7 +94,8 @@ module.exports = {
         }
         Orders.countDocuments(conditions, callback);
     },
-    findOneAndUpdate: function (transactionHash, orders) {
+    findOneAndUpdate: function (networkId, transactionHash, orders) {
+        const Orders = getOrders(networkId);
         Orders.findOneAndUpdate({transactionHash: transactionHash}, orders);
     }
 }

@@ -22,7 +22,8 @@ app.get('/transaction', (req, res) => {
     const page = req.body.page | 0;
     const size = req.body.size | 10;
     const event = req.body.event;
-    orders.findCount(user, event, (err, count) => {
+    const networkId = req.body.networkId;
+    orders.findCount(networkId, user, event, (err, count) => {
         orders.find(user, event, page, size, (result) => {
             res.send({
                 list: result,
@@ -37,13 +38,10 @@ app.get('/transaction', (req, res) => {
 
 app.post('/transaction', (req, res) => {
     const transactionHash = req.body.transactionHash;
-    const status = req.body.status;
     const created = req.body.created;
-    const from = req.body.from;
-    const to = req.body.to;
-    const amount = req.body.amount;
     const event = req.body.event;
-    orders.insertTransaction(transactionHash, status, created, from, to, amount, event, (err, order) => {
+    const networkId = req.body.networkId;
+    orders.insertTransaction(networkId, transactionHash, created, event, (err, order) => {
         if (err) {
             console.log(err);
             res.status(500).send("Order record failed");
@@ -57,11 +55,9 @@ app.post('/transaction', (req, res) => {
 app.post('/redeem', (req, res) => {
     const transactionHash = req.body.transactionHash;
     const created = req.body.created;
-    const from = req.body.from;
-    const amount = req.body.amount;
-    const serviceCharge = req.body.serviceCharge;
-    const subPledgeEth = req.body.subPledgeEth;
-    orders.insertRedeem(transactionHash, created, from, amount, serviceCharge, subPledgeEth, (err, order) => {
+    const agicAmount = req.body.agicAmount;
+    const networkId = req.body.networkId;
+    orders.insertRedeem(networkId, transactionHash, created, agicAmount, (err, order) => {
         if (err) {
             console.log(err);
             res.status(500).send("Order record failed");

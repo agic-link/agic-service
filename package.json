@@ -21,7 +21,6 @@
     "body-parser": "^1.19.0",
     "decimal.js": "^10.2.0",
     "express": "^4.17.1",
-    "express-swagger-generator": "^1.1.17",
     "mongoose": "^5.9.28",
     "process": "^0.11.10",
     "web3": "^1.2.11"
