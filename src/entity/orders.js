@@ -16,11 +16,11 @@ const ordersStructure = {
     event: String
 };
 
-const MainOrders = db.model('Orders', ordersStructure);
-const RopstenOrders = db.model('RopstenOrders', ordersStructure);
+const MainOrders = db.model('Orders', ordersStructure, 'Orders');
+const RopstenOrders = db.model('RopstenOrders', ordersStructure, 'RopstenOrders');
 
-function getOrders(id) {
-    switch (id) {
+function getOrders(network) {
+    switch (network) {
         case '1':
             return MainOrders;
         case '3':
@@ -34,7 +34,26 @@ module.exports = {
     insertOne: function (orders, callback) {
         orders.save(callback);
     },
-    insertTransaction: function (networkId, transactionHash, created, event, callback) {
+    // insertTransaction: function (networkId, transactionHash, created, event, callback) {
+    //     contract.getTransaction(networkId, transactionHash, (error, result) => {
+    //         if (error) {
+    //             console.error('Inquiry transaction Error', error)
+    //             return;
+    //         }
+    //         const Orders = getOrders(networkId);
+    //         const orders = new Orders({
+    //             transactionHash: transactionHash,
+    //             status: config.constant.status.pending,
+    //             created: created,
+    //             from: result.from,
+    //             to: result.to,
+    //             value: result.value,
+    //             event: event
+    //         });
+    //         this.insertOne(orders, callback);
+    //     })
+    // },
+    insertDeposit: function (networkId, transactionHash, created, callback) {
         contract.getTransaction(networkId, transactionHash, (error, result) => {
             if (error) {
                 console.error('Inquiry transaction Error', error)
@@ -45,15 +64,16 @@ module.exports = {
                 transactionHash: transactionHash,
                 status: config.constant.status.pending,
                 created: created,
-                from: result.from,
+                from: result.from.toUpperCase(),
                 to: result.to,
                 value: result.value,
-                event: event
+                agicValue: result.value * 4,
+                event: config.constant.events.deposit,
             });
             this.insertOne(orders, callback);
         })
     },
-    insertRedeem: function (networkId, transactionHash, created, agicAmount, callback) {
+    insertRedeem: function (networkId, transactionHash, created, eth, agicValue, callback) {
         contract.getTransaction(networkId, transactionHash, (error, result) => {
             if (error) {
                 console.error('Inquiry redeem Error', error)
@@ -64,33 +84,34 @@ module.exports = {
                 transactionHash: transactionHash,
                 status: config.constant.status.pending,
                 created: created,
-                from: result.from,
-                to: result.to,
-                value: result.value,
-                agicAmount: agicAmount,
+                from: result.from.toUpperCase(),
+                to: result.to.toUpperCase(),
+                value: eth,
+                agicValue: agicValue,
                 event: config.constant.events.redeem,
             });
             this.insertOne(orders, callback);
         })
     },
-    find: function (networkId, user, event, page, size, callback) {
-        const Orders = getOrders(networkId);
+    find: function (network, user, event, page, size, callback) {
+        const Orders = getOrders(network);
         const skip = page * size;
         const sort = {created: -1};
-        const query = Orders.find().where('from').eq(user);
+        let query = Orders.find({from: user});
+        query.collection(Orders.collection);
         if (StringUtils.isNotBlank(event)) {
-            query.where('event').eq(event);
+            query.where('event').equals(event);
         }
         query.limit(size).skip(skip).sort(sort);
         return query.exec(callback);
     },
-    findCount: function (networkId, user, event, callback) {
-        const Orders = getOrders(networkId);
+    findCount: function (network, user, event, callback) {
+        const Orders = getOrders(network);
         let conditions;
         if (StringUtils.isNotBlank(event)) {
-            conditions = {user: user, event: event};
+            conditions = {from: user, event: event};
         } else {
-            conditions = {user: user};
+            conditions = {from: user};
         }
         Orders.countDocuments(conditions, callback);
     },

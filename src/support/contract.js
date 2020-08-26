@@ -19,9 +19,11 @@ ropstenInstance.events.Deposit(function (error, event) {
     const transactionHash = event.transactionHash;
     console.log('Deposit Success：' + transactionHash)
     const eth = event.returnValues._value;
+    const agic = event.returnValues._agic;
     Orders.findOneAndUpdate(config.web3.network.ropsten, transactionHash, {
         status: config.constant.status.success,
-        value: eth
+        value: eth,
+        agicValue: agic
     });
 }).on('changed', function (event) {
     console.log('Deposit changed', event)
@@ -44,8 +46,10 @@ ropstenInstance.events.Redeem(function (error, event) {
     const serviceCharge = event.returnValues.serviceCharge;
     const subPledgeEth = event.returnValues.subPledgeEth;
     const agicValue = event.returnValues._agic;
+    const eth = event.returnValues._eth;
     Orders.findOneAndUpdate(config.web3.network.ropsten, transactionHash, {
         status: config.constant.status.success,
+        value: eth,
         agicValue: agicValue,
         subPledgeEth: subPledgeEth,
         serviceCharge: serviceCharge
@@ -59,28 +63,28 @@ ropstenInstance.events.Redeem(function (error, event) {
     Orders.findOneAndUpdate(config.web3.network.ropsten, transactionHash, {status: config.constant.status.fail})
 });
 
-ropstenInstance.events.Transfer(function (error, event) {
-    if (error) {
-        console.log("接收Transfer事件error:", error)
-        return;
-    }
-    console.log("接收Transfer事件:", event)
-}).on('data', function (event) {
-    const transactionHash = event.transactionHash;
-    console.log('Transfer Success：' + transactionHash)
-    const agicValue = event.returnValues.value;
-    Orders.findOneAndUpdate(config.web3.network.ropsten, transactionHash, {
-        status: config.constant.status.success,
-        agicValue: agicValue,
-    });
-}).on('changed', function (event) {
-    console.log('Transfer changed', event)
-}).on('error', function (error, receipt) {
-    // 如果交易被网络拒绝并带有交易收据，第二个参数将是交易收据。
-    console.log('Transfer error', error, receipt)
-    const transactionHash = receipt.transactionHash;
-    Orders.findOneAndUpdate(config.web3.network.ropsten, transactionHash, {status: config.constant.status.fail})
-});
+// ropstenInstance.events.Transfer(function (error, event) {
+//     if (error) {
+//         console.log("接收Transfer事件error:", error)
+//         return;
+//     }
+//     console.log("接收Transfer事件:", event)
+// }).on('data', function (event) {
+//     const transactionHash = event.transactionHash;
+//     console.log('Transfer Success：' + transactionHash)
+//     const agicValue = event.returnValues.value;
+//     Orders.findOneAndUpdate(config.web3.network.ropsten, transactionHash, {
+//         status: config.constant.status.success,
+//         agicValue: agicValue,
+//     });
+// }).on('changed', function (event) {
+//     console.log('Transfer changed', event)
+// }).on('error', function (error, receipt) {
+//     // 如果交易被网络拒绝并带有交易收据，第二个参数将是交易收据。
+//     console.log('Transfer error', error, receipt)
+//     const transactionHash = receipt.transactionHash;
+//     Orders.findOneAndUpdate(config.web3.network.ropsten, transactionHash, {status: config.constant.status.fail})
+// });
 
 module.exports = {
     getTransaction: function (networkId, transactionHash, callback) {
