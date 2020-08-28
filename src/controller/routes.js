@@ -20,6 +20,8 @@ app.get('/', (req, res) => {
 });
 
 app.get('/orders', (req, res) => {
+    const ip = req.header('X-Forwarded-For') === '127.0.0.1' ? req.ip : req.header('X-Forwarded-For');
+    console.log("分页查询--来源ip，参数", ip, req.query)
     const user = req.query.user;
     const page = req.query.page | 0;
     const size = req.query.size | 10;

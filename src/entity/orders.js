@@ -59,6 +59,7 @@ module.exports = {
                 console.error('Inquiry transaction Error', error)
                 return;
             }
+            console.log("Deposit订单查询结果：", result)
             const Orders = getOrders(networkId);
             const orders = new Orders({
                 transactionHash: transactionHash,
@@ -73,6 +74,7 @@ module.exports = {
             this.insertOne(orders, callback);
         })
     },
+
     insertRedeem: function (networkId, transactionHash, created, eth, agicValue, callback) {
         contract.getTransaction(networkId, transactionHash, (error, result) => {
             if (error) {
