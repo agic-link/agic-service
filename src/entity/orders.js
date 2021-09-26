@@ -1,7 +1,9 @@
 const config = require('../config/config')
-const db = require('../support/mongo').db
+const Mongo = require('../support/mongo');
 const StringUtils = require('../util/StringUtils')
 const contract = require('../support/contract')
+
+let db;
 
 const ordersStructure = {
     transactionHash: String,
@@ -16,43 +18,10 @@ const ordersStructure = {
     event: String
 };
 
-const MainOrders = db.model('Orders', ordersStructure, 'Orders');
-const RopstenOrders = db.model('RopstenOrders', ordersStructure, 'RopstenOrders');
-
-function getOrders(network) {
-    switch (network) {
-        case '1':
-            return MainOrders;
-        case '3':
-            return RopstenOrders;
-        default:
-            throw new Error('Not yet support this network');
-    }
-}
-
 module.exports = {
     insertOne: function (orders, callback) {
         orders.save(callback);
     },
-    // insertTransaction: function (networkId, transactionHash, created, event, callback) {
-    //     contract.getTransaction(networkId, transactionHash, (error, result) => {
-    //         if (error) {
-    //             console.error('Inquiry transaction Error', error)
-    //             return;
-    //         }
-    //         const Orders = getOrders(networkId);
-    //         const orders = new Orders({
-    //             transactionHash: transactionHash,
-    //             status: config.constant.status.pending,
-    //             created: created,
-    //             from: result.from,
-    //             to: result.to,
-    //             value: result.value,
-    //             event: event
-    //         });
-    //         this.insertOne(orders, callback);
-    //     })
-    // },
     insertDeposit: function (networkId, transactionHash, created, callback) {
         contract.getTransaction(networkId, transactionHash, (error, result) => {
             if (error) {
@@ -60,7 +29,7 @@ module.exports = {
                 return;
             }
             console.log("Deposit订单查询结果：", result)
-            const Orders = getOrders(networkId);
+            const Orders = this.getDb().model('KovanOrders', ordersStructure, 'KovanOrders');
             const orders = new Orders({
                 transactionHash: transactionHash,
                 status: config.constant.status.pending,
@@ -81,7 +50,7 @@ module.exports = {
                 console.error('Inquiry redeem Error', error)
                 return;
             }
-            const Orders = getOrders(networkId);
+            const Orders = this.getDb().model('KovanOrders', ordersStructure, 'KovanOrders');
             const orders = new Orders({
                 transactionHash: transactionHash,
                 status: config.constant.status.pending,
@@ -96,7 +65,7 @@ module.exports = {
         })
     },
     find: function (network, user, event, page, size, callback) {
-        const Orders = getOrders(network);
+        const Orders = this.getDb().model('KovanOrders', ordersStructure, 'KovanOrders');
         const skip = page * size;
         const sort = {created: -1};
         let query = Orders.find({from: user});
@@ -108,7 +77,7 @@ module.exports = {
         return query.exec(callback);
     },
     findCount: function (network, user, event, callback) {
-        const Orders = getOrders(network);
+        const Orders = this.getDb().model('KovanOrders', ordersStructure, 'KovanOrders');
         let conditions;
         if (StringUtils.isNotBlank(event)) {
             conditions = {from: user, event: event};
@@ -118,7 +87,13 @@ module.exports = {
         Orders.countDocuments(conditions, callback);
     },
     findOneAndUpdate: function (networkId, transactionHash, orders) {
-        const Orders = getOrders(networkId);
+        const Orders = this.getDb().model('KovanOrders', ordersStructure, 'KovanOrders');
         Orders.findOneAndUpdate({transactionHash: transactionHash}, orders);
+    },
+    getDb: function () {
+        if (db === undefined) {
+            db = Mongo.getDb();
+        }
+        return db;
     }
 }

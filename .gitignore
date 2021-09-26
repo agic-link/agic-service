@@ -106,3 +106,4 @@ dist
 .idea
 #gradle
 .gradle
+package-lock.json

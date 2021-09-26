@@ -1,41 +1,47 @@
 const config = require('../config/config');
 const mongoose = require('mongoose');
+const tunnel = require('tunnel-ssh');
 
 let db;
 
-try {
-    let options;
-    if (process.env.NODE_ENV === 'prod') {
-        options = {
+const sshConfig = {
+    host: config.mongo.host,
+    username: 'root',
+    password: config.mongo.hostPassword,
+    dstPort: config.mongo.port,
+};
+
+tunnel(sshConfig, (error, server) => {
+    if (error) {
+        console.log("SSH connection error: " + error);
+        return;
+    }
+    try {
+        const options = {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             bufferMaxEntries: 0,
-            reconnectTries: 30,
-            reconnectInterval: 1000,
-            autoReconnect: true,
             poolSize: 5,
             user: config.mongo.user,
             pass: config.mongo.password,
-            authMechanism: 'SCRAM-SHA-1'
+            authSource: config.mongo.source,
+            authMechanism: 'SCRAM-SHA-1',
         };
-    } else {
-        options = {
-            useUnifiedTopology: true,
-            useNewUrlParser: true
-        }
-    }
-    mongoose.connect(config.mongo.url, options);
-    db = mongoose.connection;
-    db.on('error', (error) => {
+        mongoose.connect("mongodb://localhost:" + config.mongo.port + "/" + config.mongo.source, options);
+        db = mongoose.connection;
+        db.on('error', (error) => {
+            console.log(`MongoDB connecting failed: ${error}`)
+        })
+        db.once('open', () => {
+            console.log('MongoDB connecting succeeded')
+        })
+    } catch (error) {
         console.log(`MongoDB connecting failed: ${error}`)
-    })
-    db.once('open', () => {
-        console.log('MongoDB connecting succeeded')
-    })
-} catch (error) {
-    console.log(`MongoDB connecting failed: ${error}`)
-}
+    }
+});
 
 module.exports = {
-    db: db
+    getDb() {
+        return db;
+    }
 }
